@@ -1,0 +1,190 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Piedmont Code Test";
+}
+
+<div class="topnav" id="login-row">
+    <div id="login-view">
+        <input id="username" type="text" placeholder="Username" name="username">
+        <input id="password" type="password" placeholder="Password">
+        <button class="btn btn-primary" id="submit-login" type="submit">Login</button>
+    </div>
+</div>
+
+<br />
+
+<div id="view-logged-out">
+    <div class="row" id="not-logged-in">
+        <p><strong><em>Please log in to view and add carriers.</em></strong></p>
+    </div>
+</div>
+
+<div id="view-logged-in">
+    <div class="row" id="carrier-search-row">
+        <table>
+                <tbody>
+                    <tr>
+                        <td>
+                            <input id="carrier-key" type="text" placeholder="Carrier Key (optional)" name="carrier-key">
+                        </td>
+                        <td>
+                            <button class="btn btn-primary" id="search-carriers" type="button">Search</button>
+                        </td>
+                        <td>
+                            <button class="btn btn-primary" id="add-carrier" type="button">Add Carrier</button>
+                        </td>
+                    </tr>
+                </tbody>
+        </table>
+    </div>
+
+    <br />
+    <div class="row" id="view-carrier-row">
+        <div class="accordion" id="carrier-list"></div>
+    </div>
+
+    <div class="row" id="add-carrier-row">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th colspan="2" class="text-center">Add New Carrier</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Carrier ID:</th>
+                    <td><input id="carrierID" type="text" placeholder="Carrier ID" name="carrierID" required></td>
+                </tr>
+                <tr>
+                    <th>Name:</th>
+                    <td><input id="name" type="text" placeholder="Name" name="name" required></td>
+                </tr>
+                <tr>
+                    <th>Account ID:</th>
+                    <td><input id="accountID" type="text" placeholder="Account ID (Optional)" name="accountID"></td>
+                </tr>
+                <tr>
+                    <th>SCAC:</th>
+                    <td><input id="scac" type="text" placeholder="SCAC (Optional)" name="scac"></td>
+                </tr>
+                <tr>
+                    <th>Active:</th>
+                    <td>
+                        <select id="isActive">
+                            <option value="" selected disabled>Optional</option>
+                            <option>Yes</option>
+                            <option>No</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Freight Collect Only:</th>
+                    <td>
+                        <select id="isFreightCollectOnly">
+                            <option value="" selected disabled>Optional</option>
+                            <option>Yes</option>
+                            <option>No</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Freight Forwarder:</th>
+                    <td>
+                        <select id="isFreightForwarder">
+                            <option value="" selected disabled>Optional</option>
+                            <option>Yes</option>
+                            <option>No</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Vendor ID:</th>
+                    <td><input id="vendorID" type="text" placeholder="Vendor ID (Optional)" name="vendorID"></td>
+                </tr>
+                <tr>
+                    <th>Vendor Key:</th>
+                    <td><input id="vendorKey" type="text" placeholder="Vendor Key (Optional)" name="vendorKey"></td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                    <td><button class="btn btn-primary" id="submit-new-carrier" type="button">Add</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+ </div>
+
+
+<script>
+    $('#submit-login').click(function () {
+        authenticate_user($('#username').val(), $('#password').val());
+    }); //end click event for #submit-login
+
+    $('#search-carriers').click(function () {
+        //Hide #add-carrier-row and reset the table values
+        $('#add-carrier-row').css("display", "none");
+        resetAddNewCarrierTable();
+
+        //display #add-carrier-row and display the new carrier
+        $('#view-carrier-row').css("display", "block");
+
+        //if #carrier-key value is empty then retrieve all carriers
+        //else retrieve the carrier specified
+        if ($('#carrier-key').val() == '') {
+            GetAllCarriers();
+        }//end if
+        else {
+            GetSpecificCarrier($('#carrier-key').val());
+        }//end if
+    }); //end click event for #search-carriers
+
+    $('#add-carrier').click(function () {
+        //Hide #view-carrier-row
+        $('#view-carrier-row').css("display", "none");
+        
+        //display #add-carrier-row
+        $('#add-carrier-row').css("display", "block");
+    }); //end click event for #add-carrier
+
+    $('#submit-new-carrier').click(function () {
+        //Make sure at least the required fields are filled out
+        if ($('#carrierID').val() == '' || $('#name').val() == '') {
+            alert('Both the Carrier ID and Name are required to add a new carrier.');
+
+            //exit the click event
+            return false;
+        }//end if
+
+        //create array with all the new carrier information
+        var new_carrier = {
+            "accountId": $('#accountID').val(),
+            "carrierId": $('#carrierID').val(),
+            "isActive": ($('#isActive').val() == 'Yes' ? true : false),
+            "isFreightCollectOnly": ($('#isFreightCollectOnly').val() == 'Yes' ? true : false),
+            "isFreightForwarder": ($('#isFreightForwarder').val() == 'Yes' ? true : false),
+            "name": $('#name').val(),
+            "scac": $('#scac').val(),
+            "vendorId": $('#vendorID').val(),
+            "vendorKey": $('#vendorKey').val()
+        };
+        
+        //submit the new carrier
+        AddCarrier(new_carrier);
+    }); //end click event for #submit-new-carrier
+
+    /*
+     * This will reset the values inside the table to add a new carrier.
+     */
+    function resetAddNewCarrierTable() {
+        $('#carrierID').val('');
+        $('#name').val('');
+        $('#accountID').val('');
+        $('#scac').val('');
+        $('#isActive').val('');
+        $('#isFreightCollectOnly').val('');
+        $('#isFreightForwarder').val('');
+        $('#vendorID').val('');
+        $('#vendorKey').val('');
+    }//end resetAddNewCarrierTable()
+</script>
