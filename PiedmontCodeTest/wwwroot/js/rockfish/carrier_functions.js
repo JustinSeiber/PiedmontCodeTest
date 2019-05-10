@@ -78,9 +78,8 @@ function AddCarrier(new_carrier) {
             alert(xhr.responseJSON['message']);
         }
     }
-    console.log(settings);
+    
     $.ajax(settings).done(function (response) {
-        console.log(response);
         $('#carrier-list').html(FormatSingleCarrierForDispaly(response));
 
         //if no error then display the new carrier and reset all the fields in the new carrier table
